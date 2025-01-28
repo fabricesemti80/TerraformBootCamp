@@ -327,6 +327,84 @@ file_checksum = "42086c02e03bf671ddf621ed9922f52f2c7a605c"
 PS D:\FS_Workspace\TerraformBootCamp>
 ```
 
+## Compare to cloud-specific IAC
+
+Now let's compare Terraform with cloud-specific IAC tools. Each public cloud provider has its own IAC tool, such as AWS CloudFormation, Azure Resource Manager (ARM), or Google Cloud Deployment Manager. If one only ever intends to work with a single cloud provider, it might be tempting to use that provider's native IAC tool. However, this approach has several drawbacks:
+
+1. **Vendor Lock-in**: Using a cloud provider's native IAC tool can lead to vendor lock-in. If you decide to switch to another cloud provider, you'll need to learn a new IAC tool and potentially rewrite your infrastructure.
+2. **Limited Flexibility**: Cloud-specific IAC tools often have limited features or customization options compared to general-purpose tools like Terraform.
+3. **Lack of Community Support**: General-purpose tools like Terraform have a larger community of users and contributors, which means you'll likely find more resources, tutorials, and support when using Terraform.
+4. **Ecosystem Integration**: Terraform integrates with a wide range of tools and services, making it easier to build complex, multi-cloud infrastructure.
+5. **Versioning and Updates**: Terraform's versioning system ensures that you can easily track and manage changes to your infrastructure, making it easier to roll back to a previous state if needed.
+
+There are also a lot of other reasons to consider. Nevertheless, here is a comparative example of deploying the same Azure resources as in `3.1` with ARM:
+
+```json:TerraformBootCamp\template.json
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "location": {
+            "type": "string",
+            "defaultValue": "East US"
+        }
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Resources/resourceGroups",
+            "apiVersion": "2021-04-01",
+            "name": "example-resources",
+            "location": "[parameters('location')]",
+            "properties": {}
+        },
+        {
+            "type": "Microsoft.Network/virtualNetworks",
+            "apiVersion": "2021-02-01",
+            "name": "example-vnet",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Resources/resourceGroups', 'example-resources')]"
+            ],
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": [
+                        "10.0.0.0/16"
+                    ]
+                }
+            }
+        }
+    ]
+}
+```
+
+or Bicep:
+
+```bicep:TerraformBootCamp\template.bicep
+param location string = 'East US'
+
+resource rg 'Microsoft.Resources/resourceGroups@2021-04-01' = {
+  name: 'example-resources'
+  location: location
+}
+
+resource vnet 'Microsoft.Network/virtualNetworks@2021-02-01' = {
+  name: 'example-vnet'
+  location: location
+  properties: {
+    addressSpace: {
+      addressPrefixes: [
+        '10.0.0.0/16'
+      ]
+    }
+  }
+}
+
+```
+
+> Author's note:
+> while these are viable alternatives, I personally think - and probably Microsoft agrees as well, given that they develop Bicep - that ARM is great, but not really user-friendly due to it's JSON-based nature, it's not the best choice for people who are not familiar with JSON, as it is easy to miss a comma or a bracket, leading to long and avoidable troubleshooting sessions.
+> Bicep is somewhat better, but given that it's syntax is very similar to Terraform and the fact  it is Azure-only (while with Terraform you can pretty much work on any cloud provider), it begs the question, why not just use Terraform? Which than can manage cloud or even on-premise resources..?
+
 ## Modules vs Direct Resource Definitions
 
 ### Direct Resource Definitions
@@ -357,7 +435,7 @@ Example:
 
 #### Module Structure
 
-```
+```txt
 modules/
   network/
     main.tf
