@@ -13,8 +13,9 @@ provider "azurerm" {
   features {}
 }
 ```
-
-> Author's note: provider is what allows Terraform to abstract the underlying APIs, eliminating the need for "consumers" to understand the underlying APIs, as we only have to understand Terraform and HCL.
+> Author's note:
+> provider is what allows Terraform to abstract the underlying APIs, eliminating the need for "consumers" to understand the underlying APIs, as we only have to understand Terraform and HCL
+> you will also need to ensure you are authenticated; for example in the case of Azure, see [here](https://learn.microsoft.com/en-us/azure/developer/terraform/authenticate-to-azure?tabs=bash) how to do that
 
 ### 2. Resources
 
