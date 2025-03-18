@@ -3,10 +3,7 @@
 
 # The `terraform.tfvars` file does not need to be specified with -var-file; 
 # any other *.tfvars file will need to be specified with -var-file
-# in other words:
-# terraform plan 
-# = 
-# terraform plan -var-file="./terraform.tfvars"
-
-filename = "foo.txt"
-content  = "Hello, World from Foo!"
+# for example: 
+# terraform plan -var-file="./alternative.tfvars"
+filename = "bar.txt"
+content  = "Hello, World from Bar!"
