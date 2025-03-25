@@ -6,7 +6,7 @@
 - an azure resource group
 - an azure virtual network
 - an azure subnet
-- an azyre network interface
+- an azure network interface
 - an azure virtual machine
 
 ## Terraform-way
@@ -160,15 +160,18 @@ resource "azurerm_linux_virtual_machine" "example" {
 
 ## Still not convinced?
 
-Ok, lets picture theis very real scenario: we need to create not 1x but 3x VM-s, for our dev, staging and production envs.
+Ok, lets picture this very real scenario: 
+
+> we need to create not 1x but 3x VM-s, for our dev, staging and production envs.
+
 - each VM-s should be:
-  - in it's own resource group
-  - in it's own vnet
-  - in it's own subnet
-  - with it's own nic
-  - with unique name
-  - (don't worry about IP, we let you to use dhcp)
-  - and they are of different sizes
+  - in it's own *resource group*
+  - in it's own *vnet*
+  - in it's own *subnet*
+  - with it's own *vnic* in the *subnet*
+  - with a *unique name* of course
+  - (don't worry about IP, Azure uses dynamic IP by default...phew!!)
+  - and they are of different sizes (in a real world we would probably also use different SKU's - OS if you like - but let's not go crazy)
 - the rest of their config is similar
 
 So here we have two ways:
@@ -176,7 +179,7 @@ So here we have two ways:
 ### 1. We can click-through the above pages
 
 - fill out each 3x times
-- make sure we select the right values, change what we have to
+- make sure we select the right values, change what we have to change
 - no typos please!
 - we can only do one at a time
 
@@ -289,4 +292,6 @@ module "vm_prd" {
 
 ## Ok so really not convinced?
 
-Now picture deploying 10x VMs, 100x VMs, 1000x VMs...(or databases, or whatever)
+Now picture deploying 10x VMs, 100x VMs, 1000x VMs...(or databases, or whatever). What if they should have different sizes, different OSs, different networking, different storage, different security, different everything...?
+
+![alt text](image-15.png)
