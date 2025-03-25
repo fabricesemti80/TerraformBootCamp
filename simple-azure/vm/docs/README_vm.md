@@ -11,7 +11,8 @@
 
 ## Terraform-way
 
-- create the neccesary config files (`**main.tf`, `**variables.tf`, `outputs.tf` and `**.tfvars`)
+- `cd simple-azure\vm`
+- create/update the neccesary config files (`**main.tf`, `**variables.tf`, `outputs.tf` and `**.tfvars`)
 - run `terraform init`
 - run `terraform plan`
 - run `terraform apply`
@@ -178,30 +179,29 @@ So here we have two ways:
 
 ### 1. We can click-through the above pages
 
-- fill out each 3x times
-- make sure we select the right values, change what we have to change
+- fill out each above form **3x times**
+- (make sure we select the right values, change what we have to change of course)
 - no typos please!
-- we can only do one at a time
+- we can only do one at a time, so build will take a while
 
 > VS.
 
 ### 2. We can use terraform
 
-At this point the original config ...
+- `cd simple-azure\vms`
 
-![alt text](image-13.png)
-
-...becomes a module (in a differnt folder; in this case ..\vms) that we call again and again ...
+- create `main.tf` (I named it `vms_main.tf` for easier distinction)
+- as the previous - `vm` - config is now our module, we can just source it with:
 
 ```hcl
-module "vm1" {
+module "vm_dev" {
   source = "../vm"
-  ...
+
+  # parameters go here, refer to the module's `variables.tf` for inspiration
+}
 ```
 
-> `..\vm` means we go one folder above and use `vm` folder
-
-...and call it 3x times with 3x slightly different config each time
+- as we are creating 3x set of resources, we can just copy-paste the above, change a few lines, and we are good to go:
 
 ```hcl
 module "vm_dev" {
@@ -278,20 +278,25 @@ module "vm_prd" {
   source_image_sku              = "22_04-lts"
   source_image_version          = "latest"
 }
-
 ```
+
+- run `terraform init`
+- run `terraform plan`
+- run `terraform apply`
+- run `terraform destroy` to delete all the resources, if no longer needed
+
 
 ### Time and effort
 
-- I have not actually went through the GUI deployment
-- but I "guestimate" a good engineer (and someone who is less prone to typos than I am!) can nail the creation of 3x resource group, vnet, subnet and VMs in about 45 minutes - an hour or so
-- writing the terraform config for this - because we just copy-pasted the above - took me about 5 minutes, add in 1 min of deployment runtime 
+- I have not actually went through the GUI deployment I admit (well, not for this demo for sure)
+- but I "gues-timate" is a good engineer (and someone who is less prone to typos than I am!) can nail the creation of 3x resource group, vnet, subnet and VMs in about 45 minutes / `1 hour` or so
+- writing the terraform config for this - because we just copy-pasted the above - took me about 5 minutes, running it took about 1 min ...all in, `6 minutes`
 - this is about 10x faster than the GUI, with much less room for error
 
 ![alt text](image-14.png)
 
-## Ok so really not convinced?
+## Ok so *really* not convinced?
 
-Now picture deploying 10x VMs, 100x VMs, 1000x VMs...(or databases, or whatever). What if they should have different sizes, different OSs, different networking, different storage, different security, different everything...?
+Now picture deploying 10x VMs, 100x VMs, 1000x VMs...(or databases, or whatever). What if they should have different sizes, different OSs, different networking, different storage, different security, different everything...? Or ...gasp !... someone says "ok lets change all `Standard_A1_v2` machines to `Standard_B1s`" - how much time would it take to do that?
 
 ![alt text](image-15.png)
