@@ -1,5 +1,7 @@
 # Notes
 
+> disclaimer: this guide is based on the example deployment of `azurerm_linux_virtual_machine` resource - [src](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/linux_virtual_machine) - with minimal adjustments
+
 ## What we create
 
 - an ssh key pair
