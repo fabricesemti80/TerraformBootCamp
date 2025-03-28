@@ -487,4 +487,24 @@ Terraform provides a powerful way to manage infrastructure as code, enabling rep
 
 ## Further reading ideas
 
+some theory first...
+
 - <https://dev.to/stevenmcgown/terraform-for-dummies-part-1-eap>
+
+then practicals
+
+- <https://learn.microsoft.com/en-us/azure/developer/terraform/authenticate-to-azure>
+- <https://developer.hashicorp.com/terraform/intro>
+- <https://developer.hashicorp.com/terraform/tutorials/azure-get-started>
+- <https://developer.hashicorp.com/terraform/language/modules/develop/structure>
+- <https://spacelift.io/blog/terraform-tfvars>
+- <https://developer.hashicorp.com/terraform/language/state>
+- <https://developer.hashicorp.com/terraform/language/syntax/configuration>
+- <https://developer.hashicorp.com/terraform/language/style>
+- <https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/instance>
+- <https://developer.hashicorp.com/terraform/tutorials/cli>
+
+(and, if you mastered Terraform, the next level:)
+
+- <https://terragrunt.gruntwork.io/>
+- <https://www.runatlantis.io/guide>
