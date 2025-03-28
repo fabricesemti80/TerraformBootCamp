@@ -484,3 +484,7 @@ module "network" {
 ## Summary
 
 Terraform provides a powerful way to manage infrastructure as code, enabling repeatable and consistent deployments. By understanding its key concepts—providers, resources, variables, outputs, state, and modules—you can start building robust infrastructure configurations. The examples provided demonstrate how Terraform can be used to deploy Azure resources and manage local resources, serving as a foundation for more complex setups. Understanding the difference between modules and direct resource definitions is crucial for scaling and organizing your projects effectively.
+
+## Further reading ideas
+
+- <https://dev.to/stevenmcgown/terraform-for-dummies-part-1-eap>
