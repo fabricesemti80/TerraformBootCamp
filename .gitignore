@@ -57,3 +57,4 @@ prod/infra/RAW/**
 prod/role-assignment.ps1
 example.txt
 **.txt
+training-00/.envrc
