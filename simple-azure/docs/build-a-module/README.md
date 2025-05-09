@@ -51,8 +51,6 @@ PS C:\Users\admin-fsemti> get-childItem Env: | where-object {$_.Name -like "ARM*
 
 Name                           Value
 ----                           -----
-ARM_USE_MSI                    true
-
 
 PS C:\Users\admin-fsemti>
 ```
