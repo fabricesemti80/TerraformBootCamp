@@ -253,4 +253,427 @@ we create a - for now, blank - `main.tf` in that one too
 
 ![alt text](image-30.png)
 
-### 
+### Structure of modules
+
+Generally speaking the modules in Terraform are comprised of the following files:
+
+- `main.tf` - "mandatory"
+- `variables.tf` - "mandatory"
+- `outputs.tf` - "optional"
+
+The reason I have put these in quotations, is because technically, you could have a single `allmyterraformcode.tf` file, containing all of these, and Terraform would not care. Other people using your module might!
+
+![alt text](image.png)
+
+### Remove hard-coding
+
+Hard-coded values are always bad practice - be it a password in your script connecting to databases, or an unchangable IP address; so we will eliminate these by replacing the potential variables in the `main.tf` with variables in the `variables.tf`.
+I show an example for this, explain how it is done, and then I should you the end result - you can edit this on your own time, as the process in-beteen is just "rinse-and-repeat".
+
+Lets take a look at this part of the code:
+
+```terraform
+resource "azurerm_network_interface" "example" {
+  name                = "example-nic"
+  location            = azurerm_resource_group.example.location
+  resource_group_name = azurerm_resource_group.example.name
+
+  ip_configuration {
+    name                          = "internal"
+    subnet_id                     = azurerm_subnet.example.id
+    private_ip_address_allocation = "Dynamic"
+  }
+}
+``` 
+
+At this current stage, if we want to create two nic-s, we would need to duplicate this resource, make sure that each of them has a unique name (ie. rename this one from `resource "azurerm_network_interface" "example"` to `resource "azurerm_network_interface" "example_1"` and the copy of the block to `resource "azurerm_network_interface" "example_2"`  ), rename the interface from `example-nic` to `example-nic_1` and `example-nic_2` then rename the IP configuration to `internal_1` and `internal_2` or something similar, then duplicate the VM block, and update  and update `azurerm_network_interface.example.id`, for both new VM block to aligh with the nic-s...this is *way too much work...*
+
+The better way is this:
+
+- create a new variable for the name of the nic in the `variables.tf`
+
+```terraform
+variable "nic_name" {
+  description = "Name of the Network Interface"
+  type        = string
+  default     = "example-nic"
+}
+```
+> note: for the structure and all possible parameters of a variable, read [here](https://developer.hashicorp.com/terraform/language/values/variables)
+
+
+- and reference to it in the interface
+
+```terraform
+resource "azurerm_network_interface" "example" {
+  name                = var.nic_name
+  location            = azurerm_resource_group.example.location
+  resource_group_name = azurerm_resource_group.example.name
+
+  ip_configuration {
+    name                          = "internal"
+    subnet_id                     = azurerm_subnet.example.id
+    private_ip_address_allocation = "Dynamic"
+  }
+}
+``` 
+
+- now we do the variables same for the IP configuration
+
+```terraform
+variable "ip_configuration_name" {
+  description = "Name of the IP configuration"
+  type        = string
+  default     = "internal"
+}
+
+variable "ip_address_allocation" {
+  description = "IP address allocation"
+  type        = string
+  default     = "Dynamic"
+}
+```
+
+and eventually update the `main.tf` with these variables
+
+```terraform
+resource "azurerm_network_interface" "example" {
+  name                = var.nic_name
+  location            = azurerm_resource_group.example.location
+  resource_group_name = azurerm_resource_group.example.name
+
+  ip_configuration {
+    name                          = var.ip_configuration_name
+    subnet_id                     = azurerm_subnet.example.id
+    private_ip_address_allocation = var.ip_address_allocation
+  }
+}
+```
+
+> note: if you run `terraform plan` at this point, there would be virtually no change to the outcome compared to the "Create a single VM" section.
+
+### Now I skip ahead a little
+
+So, like I said, I now skip ahead a bit. Now we know how to create variables for *one resource* - all we have to do is replicate this to *all of the resources* in the `main.tf`
+
+Once you done, you should have `variables.tf` that looks something like this:
+
+![alt text](image-1.png)
+
+*(note the full code, screenshot is partial!)*
+
+And `main.tf` would be something like this:
+
+![alt text](image-2.png)
+
+*(this is actually the entire file)*
+
+If we now run `terraform plan` - the deployment should be working for a single VM.
+
+![alt text](image-3.png)
+
+(you can deploy it with `terraform apply` and then remove it with `terraform destroy` if you like!)
+
+### And then finally, scale this thing!
+
+Right. Now we get to the fun part: scale up.
+
+We will now switch to the `main.tf` in the `linuxvms` folder.
+
+![alt text](image-4.png)
+
+This file is empty at this point. So how do we refer to our module in the `linuxvm` folder?
+
+simply add:
+
+```terraform
+terraform {
+  required_providers {
+    azurerm = {
+      source  = "hashicorp/azurerm"
+      version = ">=2.0.0"
+    }
+    tls = {
+      source  = "hashicorp/tls"
+      version = ">=4.1.0"
+    }
+  }
+}
+provider "azurerm" {
+  features {
+  }
+}
+
+module "vm_example_1" {
+  source = "../linuxvm"
+}
+```
+
+We follow this up with the usual `terraform init`, `terraform plan` and `terraform apply`
+
+![alt text](image-5.png)
+
+At this point I hear you say: "That is great Fabrice, but we still built just one VM Fabrice, why we went through all of that trouble..?" - Fair point.
+
+Let's build two VM-s...
+
+Before we can do that though, lets think about one thing: do we really need a separate `resource group` , `virtual network`, `subnet` for each future VM-s? Likely not, so do come changes on the modules:
+
+- REMOVE these from the `linuxvm\main.tf` and add these to `linuxvms\main.tf`
+
+```terraform
+resource "azurerm_resource_group" "example" {
+  name     = var.resource_group_name
+  location = var.location
+}
+
+resource "azurerm_virtual_network" "example" {
+  name                = var.vnet_name
+  address_space       = var.vnet_address_space
+  location            = azurerm_resource_group.example.location
+  resource_group_name = azurerm_resource_group.example.name
+}
+
+resource "azurerm_subnet" "example" {
+  name                 = var.subnet_name
+  resource_group_name  = azurerm_resource_group.example.name
+  virtual_network_name = azurerm_virtual_network.example.name
+  address_prefixes     = var.subnet_address_prefixes
+}
+```
+
+Equally create a new `linuxvms\variables.tf` and COPY these lines from the `linuxvm\variables.tf` to this one too
+
+```terraform
+variable "resource_group_name" {
+  description = "Name of the resource group"
+  type        = string
+  default     = "example-resources"
+}
+
+variable "location" {
+  description = "Azure region where resources will be created"
+  type        = string
+  default     = "West Europe"
+}
+
+variable "vnet_name" {
+  description = "Name of the virtual network"
+  type        = string
+  default     = "example-network"
+}
+
+variable "vnet_address_space" {
+  description = "Address space for the virtual network"
+  type        = list(string)
+  default     = ["10.0.0.0/16"]
+}
+
+variable "subnet_name" {
+  description = "Name of the subnet"
+  type        = string
+  default     = "internal"
+}
+
+variable "subnet_address_prefixes" {
+  description = "Address prefixes for the subnet"
+  type        = list(string)
+  default     = ["10.0.2.0/24"]
+}
+```
+
+we also create a new variable in `linuxvm\variables.tf`:
+
+```terraform
+variable "subnet_id" {
+  description = "ID of the subnet"
+  type        = string
+}
+```
+
+Now, these resources are created outside of the module. This introduces some error, if we try to do the dryrun (`terraform plan`) again.
+
+![alt text](image-7.png)
+
+This is because we refer to these resources *inside* the module, but they are no longer *inside* - they been moved *outside* the module.
+
+The solution to this - and the reason that I said *COPY* the variables and not *MOVE* them in this step: we will update the `linuxvm\main.tf` to use variables - for which we will get values from the resources *outside* of the module
+
+```terraform
+resource "azurerm_network_interface" "example" {
+  name                = var.nic_name
+  location            = var.location            # this used to be: azurerm_resource_group.example.location
+  resource_group_name = var.resource_group_name # this used to be: azurerm_resource_group.example.name
+
+  ip_configuration {
+    name                          = var.ip_configuration_name
+    subnet_id                     = var.subnet_id # this used to be: azurerm_subnet.example.id
+    private_ip_address_allocation = var.ip_address_allocation
+  }
+}
+```
+
+And then - since we have variables in `linuxvms\variables.tf` too, we can use them in `linuxvms\main.tf` too. So at this point the `main.tf` that calls the module would look like something like this:
+
+![alt text](image-8.png)
+
+(1) provider definition for the module
+(2) resources created *outside* of the module, since we need them only once
+(3) the actual module call
+
+## From 1 to 2 VM-s
+
+So at this point if we do `terraform plan` we will see the system wants to create 7 resources (just like before).
+
+![alt text](image-9.png)
+
+These are:
+- a resource group
+- a virtual network
+- a subnet
+- a network interface
+- an ssh key
+- a local file for the SSH key
+- and a VM
+
+To create additional VM-s with the same module, we need to do two things:
+
+- duplicate the module 
+- and make both the module's name, and the reasonably unique variables - by overrwiting the defaults - like so:
+
+![alt text](image-10.png)
+
+With this, now plan is changed:
+
+![alt text](image-11.png)
+
+Wait...2 x 7 should be 14 no..?
+
+True. but remember, we did not create separate resource groups, vnets, and subnets (in fact, if I want to be really lazy, I could have re-used the RSA key too...); what we now want to deploy are:
+
+- a resource group
+- a virtual network
+- a subnet
+- a network interface
+- an ssh key 
+- a local file for the SSH key
+- and a VM
+- and a *second* network interface
+- and a *second* ssh key 
+- and a *second*  local file for the SSH key
+- and a *second* VM
+
+(count them: 11 :) )
+
+If you do not believe me:
+
+![alt text](image-12.png)
+
+- 7x resources on Azure
+
+![alt text](image-13.png)
+
+- 2x local files containing the RSA keys
+- (the last two items are just the actual rsa keypairs, which I do not have a screenshot of...sorry :()
+
+## Summary
+
+At this point we can:
+
+- scale this infinetly:
+
+All we have to do is duplicate this part of the code; and update the name of the VM, name of the nic and key file name (in order to make them unique), to create additional VMs.
+
+```terraform
+module "vm_example_1" {
+  source = "../linuxvm"
+
+  resource_group_name = azurerm_resource_group.example.name
+  location            = azurerm_resource_group.example.location
+  subnet_id           = azurerm_subnet.example.id
+
+  vm_name              = "vm-example-1"
+  nic_name             = "nic-example-1"
+  private_key_filename = "./id_rsa_example_1"
+
+}
+```
+
+Better yet, the modules allow to easily change *all* the variables defined in the module.
+
+For example, the image SKU for the VM can be different between two instances. Currently we esentially have:
+
+```terraform
+module "vm_example_1" {
+  source = "../linuxvm"
+
+  resource_group_name = azurerm_resource_group.example.name
+  location            = azurerm_resource_group.example.location
+  subnet_id           = azurerm_subnet.example.id
+
+  vm_name              = "vm-example-1"
+  nic_name             = "nic-example-1"
+  private_key_filename = "./id_rsa_example_1"
+
+  image_offer = "0001-com-ubuntu-server-jammy"
+  image_sku   = "22_04-lts"
+}
+
+module "vm_example_2" {
+  source = "../linuxvm"
+
+  resource_group_name = azurerm_resource_group.example.name
+  location            = azurerm_resource_group.example.location
+  subnet_id           = azurerm_subnet.example.id
+
+  vm_name              = "vm-example-2"
+  nic_name             = "nic-example-2"
+  private_key_filename = "./id_rsa_example_2"
+
+  image_offer = "0001-com-ubuntu-server-jammy"
+  image_sku   = "22_04-lts"
+
+}
+```
+
+> note: I know. the `image_offer` and `image_sku` parameters are not in the code; instead these are the current default values
+
+But what if we maybe want the second server to be 24?
+
+Simple update this to:
+
+
+```terraform
+module "vm_example_1" {
+  source = "../linuxvm"
+
+  resource_group_name = azurerm_resource_group.example.name
+  location            = azurerm_resource_group.example.location
+  subnet_id           = azurerm_subnet.example.id
+
+  vm_name              = "vm-example-1"
+  nic_name             = "nic-example-1"
+  private_key_filename = "./id_rsa_example_1"
+
+  image_offer = "0001-com-ubuntu-server-jammy"
+  image_sku   = "22_04-lts"
+}
+
+module "vm_example_2" {
+  source = "../linuxvm"
+
+  resource_group_name = azurerm_resource_group.example.name
+  location            = azurerm_resource_group.example.location
+  subnet_id           = azurerm_subnet.example.id
+
+  vm_name              = "vm-example-2"
+  nic_name             = "nic-example-2"
+  private_key_filename = "./id_rsa_example_2"
+
+  image_offer = "ubuntu-24_04-lts"
+  image_sku   = "server"
+  vm_size     = "Standard_D2s_v3"
+
+}
+```
+
