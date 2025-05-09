@@ -97,7 +97,7 @@ If these filled in correctly, you should be able to check them in your shell:
 
 this error is very clear: we do not have the `id_rsa.pub` file in our user's home directory's `.ssh` subfolder :(
 
-to address this, we could use [ssh-keygen](https://learn.microsoft.com/en-us/viva/glint/setup/sftp-ssh-key-gen) or similar tools  to create a key pair, but we probably want to keep this under the control of terraform; so we update the terraform block, to include a [new provider](https://registry.terraform.io/providers/hashicorp/tls/latest/docs) that will do this for us
+to address this, we could use [ssh-keygen](https://learn.microsoft.com/en-us/viva/glint/setup/sftp-ssh-key-gen) or similar tools  to create a key pair, but we probably want to keep this under the control of Terraform; so we update the terraform block, to include a [new provider](https://registry.terraform.io/providers/hashicorp/tls/latest/docs) that will do this for us
 
 ```terraform
 terraform {
@@ -133,7 +133,7 @@ resource "local_file" "private_key" {
 
 > note: in the interest to keep this guide as short as possible, I will not cover this provider in great details, nor the parameters involved - please read the documentation on the link
 
-we then conveniently use this newly generated SSH key in the VM-s confi; all we need is to change:
+we then conveniently use this newly generated SSH key in the VM-s configuration; all we need is to change:
 
  from:
 
@@ -162,7 +162,9 @@ to:
 
 ![alt text](image-22.png)
 
-the important part is, plan does not fail and shows us the creation of resources
+the important part is, plan does not fail and shows us the creation of resources;
+
+> note the "7 to add" - this will be important later!
 
 at this point our `main.tf` should look something like this:
 
@@ -196,7 +198,7 @@ to change this:
 
 ![alt text](image-27.png)
 
-deployment can take a few minutes (*depending on a number of factors, i.e. conection to Azure API, load, and the current air humidity at that time in Kiwirrkurra (:D)*)
+deployment can take a few minutes (*depending on a number of factors, i.e. conection to Azure API, load, and the current air humidity at that time in Kiwirrkurra :laughing:*)
 
 - check on Azure what is deployed
 
