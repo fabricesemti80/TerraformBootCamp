@@ -15,9 +15,11 @@ We will start the writing of the code from scratch, but we still have to have a 
 
 - [Terraform installed](https://developer.hashicorp.com/terraform/tutorials/aws-get-started/install-cli) on the system (I will not cover this here, feel free to follow the link to do this)
 - Terraform often downloads providers and internal modules from [GitHub](https://github.com/) and HashiCorp/Terraform software repositories, so it is a good idea to unlock at least:
+
   - `*.github.com` 
   - `*.terraform.io`
   - `*.hashicorp.com` 
+
 wildcard domain. Generally port `443` is used, but consider unlocking `80` and `22` too just in case
 - we will also need to have an Azure tenant and subscription, and a means to authenticate with these; there are multiple ways to achive this; my recommended way is to use [service principal with a client secret](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/guides/service_principal_client_secret), which is both relatively easy to implement and compatible with future-CI/CD implementation, but on the link we can find explanations on other methods as well. (To not make this guide extremely long, I will not detail this here, but in short: Step 1. Create service principal and note down it's client ID and client secret; Step 2. Assign roles as and when needed; start with subscription contributor; might need other roles later)
 - if we go with my method, we will need to supply a few environment variables; as I am currently working from a Windows-system, I use PowerShell as my console, and therefore commands will reflect this; Unix-like systems and bash needs slightly different methods, but I leave the reading on this - or AI-ing - down to the reader.
