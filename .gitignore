@@ -58,3 +58,5 @@ prod/role-assignment.ps1
 example.txt
 **.txt
 training-00/.envrc
+simple-azure/vm/id_rsa
+simple-azure/vm/.terraform.lock.hcl
