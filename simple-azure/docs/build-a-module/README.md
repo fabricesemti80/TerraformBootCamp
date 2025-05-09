@@ -1,4 +1,4 @@
-# How to modularise a configuration 
+# How to modularise a configuration  :recycle:
 *(and why should we do it?)*
 
 Let's start by answering the question "why" first, and then we will cover the "how" part.
@@ -9,7 +9,7 @@ If we take a look on the example provided at that link, we will see how we can r
 This is great, but as soon as we want to create multiple machines, (perhaps in the same resource group, or in another, perhaps in the same VNET or in another, etc.) - we will have to keep repeating a large chunk of the codeblock, and manually edit it, which is not a great practice, source of errors (not to mention it goes against the [D.R.Y. principle of programming](https://en.wikipedia.org/wiki/Don%27t_repeat_yourself)). 
 That is, where modules come in.
 
-## Pre-requisites
+## Pre-requisites :raised_hand:
 
 We will start the writing of the code from scratch, but we still have to have a few things in place:
 
@@ -22,7 +22,7 @@ wildcard domain. Generally port `443` is used, but consider unlocking `80` and `
 - we will also need to have an Azure tenant and subscription, and a means to authenticate with these; there are multiple ways to achive this; my recommended way is to use [service principal with a client secret](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/guides/service_principal_client_secret), which is both relatively easy to implement and compatible with future-CI/CD implementation, but on the link we can find explanations on other methods as well. (To not make this guide extremely long, I will not detail this here, but in short: Step 1. Create service principal and note down it's client ID and client secret; Step 2. Assign roles as and when needed; start with subscription contributor; might need other roles later)
 - if we go with my method, we will need to supply a few environment variables; as I am currently working from a Windows-system, I use PowerShell as my console, and therefore commands will reflect this; Unix-like systems and bash needs slightly different methods, but I leave the reading on this - or AI-ing - down to the reader.
 
-## Create a single Linux VM
+## Create a single Linux VM :computer:
 
 ### Write code
 
@@ -206,9 +206,9 @@ deployment can take a few minutes (*depending on a number of factors, i.e. conec
 
 > note: while at this time the machine has been deployed, you won't be able to connect to it; that is because if you look at the code, there is not public IP on the network interface; we also did not specify a network security group and NAT gateway - or a bastion service - which would be higly recommended to use in Real World, to provide a secure access to the VM; adding these would make things a lot more complex so we skip this; if you really curious, you can go to the VM on the portal, select "Connect" and Azure will automatically provision a free bastion instance for you, however this is not in the scope of Terraform, nor I am going to explain how to use SSH keys...
 
-- once we done with observing our great work, run `terraform destroy` to de-provision all the resources
+- once we done with observing our great work, run `terraform destroy` to de-provision all the resources :boom:
 
-## Move to multiple VM-s
+## Move to multiple VM-s :computer: :computer: :computer:
 
 Now we are getting to the fun-part. 
 Building one VM in a subnet, and one subnet in a vnet, and one vnet in a resource group is hardly what we need, often times we need multiple instances. With individually changing parameters. And that means  we need reusable pieces of code, also called [Terraform modules](https://developer.hashicorp.com/terraform/language/modules).
@@ -269,7 +269,7 @@ The reason I have put these in quotations, is because technically, you could hav
 
 ### Remove hard-coding
 
-Hard-coded values are always bad practice - be it a password in your script connecting to databases, or an unchangable IP address; so we will eliminate these by replacing the potential variables in the `main.tf` with variables in the `variables.tf`.
+Hard-coded values are always bad practice :imp: - be it a password in your script connecting to databases, or an unchangable IP address; so we will eliminate these by replacing the potential variables in the `main.tf` with variables in the `variables.tf`.
 I show an example for this, explain how it is done, and then I should you the end result - you can edit this on your own time, as the process in-beteen is just "rinse-and-repeat".
 
 Lets take a look at this part of the code:
@@ -301,8 +301,8 @@ variable "nic_name" {
   default     = "example-nic"
 }
 ```
-> note: for the structure and all possible parameters of a variable, read [here](https://developer.hashicorp.com/terraform/language/values/variables)
 
+> note: for the structure and all possible parameters of a variable, read [here](https://developer.hashicorp.com/terraform/language/values/variables)
 
 - and reference to it in the interface
 
@@ -356,7 +356,7 @@ resource "azurerm_network_interface" "example" {
 
 ### Now I skip ahead a little
 
-So, like I said, I now skip ahead a bit. Now we know how to create variables for *one resource* - all we have to do is replicate this to *all of the resources* in the `main.tf`
+So, like I said, I now skip ahead a bit. Now we know how to create variables for *one resource* - all we have to do is replicate this to *all of the resources* in the `main.tf`. In the interest of time, I do not write this down, but you should do it at least once, to make sure to understand this!
 
 Once you done, you should have `variables.tf` that looks something like this:
 
@@ -415,13 +415,13 @@ We follow this up with the usual `terraform init`, `terraform plan` and `terrafo
 
 ![alt text](image-5.png)
 
-At this point I hear you say: "That is great Fabrice, but we still built just one VM Fabrice, why we went through all of that trouble..?" - Fair point.
+At this point I hear you say: **"That is great Fabrice, but we still built just one VM Fabrice, why we went through all of that trouble..?"** - Fair point.
 
 Let's build two VM-s...
 
 Before we can do that though, lets think about one thing: do we really need a separate `resource group` , `virtual network`, `subnet` for each future VM-s? Likely not, so do come changes on the modules:
 
-- REMOVE these from the `linuxvm\main.tf` and add these to `linuxvms\main.tf`
+- MOVE these from the `linuxvm\main.tf` and add these to `linuxvms\main.tf`
 
 ```terraform
 resource "azurerm_resource_group" "example" {
@@ -515,6 +515,8 @@ resource "azurerm_network_interface" "example" {
 }
 ```
 
+> note: please realise; the resource group is used in other places too in the module's `main.tf` so please replace / edit those places too!
+
 And then - since we have variables in `linuxvms\variables.tf` too, we can use them in `linuxvms\main.tf` too. So at this point the `main.tf` that calls the module would look like something like this:
 
 ![alt text](image-8.png)
@@ -523,7 +525,7 @@ And then - since we have variables in `linuxvms\variables.tf` too, we can use th
 (2) resources created *outside* of the module, since we need them only once
 (3) the actual module call
 
-## From 1 to 2 VM-s
+## From 1 to 2 VM-s :rocket:
 
 So at this point if we do `terraform plan` we will see the system wants to create 7 resources (just like before).
 
@@ -540,7 +542,7 @@ These are:
 
 To create additional VM-s with the same module, we need to do two things:
 
-- duplicate the module 
+- duplicate the module call (if you are familiar with PowerShell functions, it is the equivalent of calling one function multiple times...ie.`Get-AdUser "Joe.Blogs"` ; `Get-AdUser "Jane.Doe"`, etc.)
 - and make both the module's name, and the reasonably unique variables - by overrwiting the defaults - like so:
 
 ![alt text](image-10.png)
@@ -549,7 +551,7 @@ With this, now plan is changed:
 
 ![alt text](image-11.png)
 
-Wait...2 x 7 should be 14 no..?
+Wait...`2 x 7 = 14` ... should be 14 no..?
 
 True. but remember, we did not create separate resource groups, vnets, and subnets (in fact, if I want to be really lazy, I could have re-used the RSA key too...); what we now want to deploy are:
 
@@ -565,7 +567,7 @@ True. but remember, we did not create separate resource groups, vnets, and subne
 - and a *second*  local file for the SSH key
 - and a *second* VM
 
-(count them: 11 :) )
+(count them: 11 :smirk:)
 
 If you do not believe me:
 
@@ -576,9 +578,9 @@ If you do not believe me:
 ![alt text](image-13.png)
 
 - 2x local files containing the RSA keys
-- (the last two items are just the actual rsa keypairs, which I do not have a screenshot of...sorry :()
+- (the last two items are just the actual rsa keypairs, which I do not have a screenshot of...sorry :worried:)
 
-## Summary
+## Summary :muscle:
 
 At this point we can:
 
@@ -688,6 +690,7 @@ While this will rebuild the VM-s (no other way, as this is a newer OS), you will
 from one module, two different spec VM
 
 > notes:
+> - if you are confused why `image_sku   = "22_04-lts"` suddenly changes to `image_sku   = "server"` - you are not alone; this is the level of consistency on Azure API these days :triumph:
 > - should you wonder how to find the SKU-s: `az vm image list --publisher ca` will get you the ones published by `Canonical`, `Ubuntu`'s publisher
 > - and why did we alter the `vm_size`? other than *because I can*, the answer is: the newer OS required a newer hardwer gen
 
@@ -696,7 +699,8 @@ But the silver lining is:
 - most often modules are readily available and you do not have to create them - but it is important to create one at least yourself, so you understand how it works (and troubleshoot)
 - after that, if you find one that does what you need...well, ChatGPT or other AIs are your best friend!
 
-## Future plans
+## Future plans :dart:
 
 - In a later iteration we can make the module call even more user friendly and DRY with the introduction of [local values](https://developer.hashicorp.com/terraform/language/values/locals) and [for_each](https://developer.hashicorp.com/terraform/language/meta-arguments/for_each)
-- I did not use `outputs.tf` - at a later stage I will add outputs to the module as well, and we can cover this
+- I did not use `outputs.tf` - at a later stage I will add outputs to the module as well, and we can cover this (and how to use them)
+- using `outputs` will allow to use those as "inputs" (also known as `variables`) for *other* subseqnet modules; i.e. you might want to do something with the VM-s you create, perhaps add them to an availaiblity group, or run some provisioners on them, etc...
