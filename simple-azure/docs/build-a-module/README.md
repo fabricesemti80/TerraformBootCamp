@@ -6,7 +6,7 @@ Let's start by answering the question "why" first, and then we will cover the "h
 Our starting point will be the [Azure Linux VM resource](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/linux_virtual_machine). (The choice of OS matters little, but generally it is easier to work with Linux servers.)
 
 If we take a look on the example provided at that link, we will see how we can relatively easily set up a complete "stack" ( by "stack" I mean the combination `resource group`, `virtual network`, `subnet`, `network interface`, and finally `virtual machine` ). 
-This is great, but as soon as we want to create multiple machines, (perhaps in the same resource group, or in another, perhaps in the same VNET or in another, etc.) - we will have to keep repeating a large chunk of the codeblock, and manually edit it, which is not a great practice, source of errors (not to mention it goes against the [D.R.Y. principle of programing](https://en.wikipedia.org/wiki/Don%27t_repeat_yourself)). 
+This is great, but as soon as we want to create multiple machines, (perhaps in the same resource group, or in another, perhaps in the same VNET or in another, etc.) - we will have to keep repeating a large chunk of the codeblock, and manually edit it, which is not a great practice, source of errors (not to mention it goes against the [D.R.Y. principle of programming](https://en.wikipedia.org/wiki/Don%27t_repeat_yourself)). 
 That is, where modules come in.
 
 ## Pre-requisites
@@ -14,12 +14,12 @@ That is, where modules come in.
 We will start the writing of the code from scratch, but we still have to have a few things in place:
 
 - [Terraform installed](https://developer.hashicorp.com/terraform/tutorials/aws-get-started/install-cli) on the system (I will not cover this here, feel free to follow the link to do this)
-- Terraform often downloads providers and intenal modules from [GitHub](https://github.com/) and HashiCorp/Terraform software repositories, so it is a good idea to unlock at least:
+- Terraform often downloads providers and internal modules from [GitHub](https://github.com/) and HashiCorp/Terraform software repositories, so it is a good idea to unlock at least:
   - `*.github.com` 
   - `*.terraform.io`
   - `*.hashicorp.com` 
 wildcard domain. Generally port `443` is used, but consider unlocking `80` and `22` too just in case
-- we will also need to have an Azure tenant and subscription, and a means to authenticate with these; there are multiple ways to achive this; my recommended way is to use [service principal with a client secret](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/guides/service_principal_client_secret), which is both relatively easy to implement and compatbile with future-CI/CD implementation, but on the link we can find explanations on other methods as well. (To not make this guide extremely long, I will not detail this here, but in short: Step 1. Create service principal and note down it's client ID and client secret; Step 2. Assign roles as and when needed; start with subscription contributor; might need other roles later)
+- we will also need to have an Azure tenant and subscription, and a means to authenticate with these; there are multiple ways to achive this; my recommended way is to use [service principal with a client secret](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/guides/service_principal_client_secret), which is both relatively easy to implement and compatible with future-CI/CD implementation, but on the link we can find explanations on other methods as well. (To not make this guide extremely long, I will not detail this here, but in short: Step 1. Create service principal and note down it's client ID and client secret; Step 2. Assign roles as and when needed; start with subscription contributor; might need other roles later)
 - if we go with my method, we will need to supply a few environment variables; as I am currently working from a Windows-system, I use PowerShell as my console, and therefore commands will reflect this; Unix-like systems and bash needs slightly different methods, but I leave the reading on this - or AI-ing - down to the reader.
 
 ## Create a single Linux VM
@@ -99,7 +99,7 @@ this error is very clear: we do not have the `id_rsa.pub` file in our user's hom
 
 to address this, we could use [ssh-keygen](https://learn.microsoft.com/en-us/viva/glint/setup/sftp-ssh-key-gen) or similar tools  to create a key pair, but we probably want to keep this under the control of terraform; so we update the terraform block, to include a [new provider](https://registry.terraform.io/providers/hashicorp/tls/latest/docs) that will do this for us
 
-```terrraform
+```terraform
 terraform {
   required_providers {
     azurerm = {
@@ -677,3 +677,24 @@ module "vm_example_2" {
 }
 ```
 
+While this will rebuild the VM-s (no other way, as this is a newer OS), you will have at the end:
+
+![alt text](image-15.png)
+
+![alt text](image-31.png)
+
+from one module, two different spec VM
+
+> notes:
+> - should you wonder how to find the SKU-s: `az vm image list --publisher ca` will get you the ones published by `Canonical`, `Ubuntu`'s publisher
+> - and why did we alter the `vm_size`? other than *because I can*, the answer is: the newer OS required a newer hardwer gen
+
+I realise that this is probably a lot of code. And work. (Even though I must note: this is just a very simple setup, of a less complex resource stacks...)
+But the silver lining is:
+- most often modules are readily available and you do not have to create them - but it is important to create one at least yourself, so you understand how it works (and troubleshoot)
+- after that, if you find one that does what you need...well, ChatGPT or other AIs are your best friend!
+
+## Future plans
+
+- In a later iteration we can make the module call even more user friendly and DRY with the introduction of [local values](https://developer.hashicorp.com/terraform/language/values/locals) and [for_each](https://developer.hashicorp.com/terraform/language/meta-arguments/for_each)
+- I did not use `outputs.tf` - at a later stage I will add outputs to the module as well, and we can cover this
