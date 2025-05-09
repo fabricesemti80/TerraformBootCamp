@@ -160,7 +160,7 @@ to:
 
 ![alt text](image-21.png)
 
-...imiting a few lines here ...
+...omiting a few lines here ...
 
 ![alt text](image-22.png)
 
