@@ -1,50 +1,16 @@
-
 variable "resource_group_name" {
   description = "Name of the resource group"
   type        = string
-  default     = "example-resources"
 }
 
 variable "location" {
   description = "Azure region where resources will be created"
   type        = string
-  default     = "West Europe"
 }
-
-variable "vnet_name" {
-  description = "Name of the virtual network"
-  type        = string
-  default     = "example-network"
-}
-
-variable "vnet_address_space" {
-  description = "Address space for the virtual network"
-  type        = list(string)
-  default     = ["10.0.0.0/16"]
-}
-
-variable "subnet_name" {
-  description = "Name of the subnet"
-  type        = string
-  default     = "internal"
-}
-
-variable "subnet_id" {
-  description = "ID of the subnet"
-  type        = string
-}
-
-variable "subnet_address_prefixes" {
-  description = "Address prefixes for the subnet"
-  type        = list(string)
-  default     = ["10.0.2.0/24"]
-}
-
 
 variable "nic_name" {
   description = "Name of the network interface"
   type        = string
-  default     = "example-nic"
 }
 
 variable "ip_configuration_name" {
@@ -53,8 +19,13 @@ variable "ip_configuration_name" {
   default     = "internal"
 }
 
+variable "subnet_id" {
+  description = "ID of the subnet where the VM will be connected"
+  type        = string
+}
+
 variable "ip_address_allocation" {
-  description = "IP address allocation method"
+  description = "Method of private IP allocation"
   type        = string
   default     = "Dynamic"
 }
@@ -62,19 +33,24 @@ variable "ip_address_allocation" {
 variable "vm_name" {
   description = "Name of the virtual machine"
   type        = string
-  default     = "example-machine"
 }
 
 variable "vm_size" {
   description = "Size of the virtual machine"
   type        = string
-  default     = "Standard_F2"
+  default     = "Standard_B1s"
 }
 
 variable "admin_username" {
-  description = "Admin username for the virtual machine"
+  description = "Username for the VM admin account"
   type        = string
   default     = "adminuser"
+}
+
+variable "admin_password" {
+  description = "Password for the VM admin account"
+  type        = string
+  sensitive   = true
 }
 
 variable "os_disk_caching" {
@@ -98,13 +74,13 @@ variable "image_publisher" {
 variable "image_offer" {
   description = "Offer of the VM image"
   type        = string
-  default     = "0001-com-ubuntu-server-jammy"
+  default     = "UbuntuServer"
 }
 
 variable "image_sku" {
   description = "SKU of the VM image"
   type        = string
-  default     = "22_04-lts"
+  default     = "18.04-LTS"
 }
 
 variable "image_version" {
@@ -120,7 +96,7 @@ variable "ssh_key_algorithm" {
 }
 
 variable "ssh_key_rsa_bits" {
-  description = "Bit size for RSA SSH key"
+  description = "Number of bits for RSA SSH key"
   type        = number
   default     = 4096
 }
@@ -128,11 +104,37 @@ variable "ssh_key_rsa_bits" {
 variable "private_key_filename" {
   description = "Filename to save the private key"
   type        = string
-  default     = "./id_rsa"
+  default     = "id_rsa"
 }
 
 variable "private_key_file_permission" {
   description = "File permission for the private key file"
   type        = string
   default     = "0600"
+}
+
+variable "public_ip_name" {
+  description = "Name of the public IP address"
+  type        = string
+  default     = "vm-public-ip"
+}
+
+variable "nsg_name" {
+  description = "Name of the network security group"
+  type        = string
+  default     = "vm-nsg"
+}
+
+# Add these variables to your existing variables.tf file
+
+variable "public_ip_allocation_method" {
+  description = "Allocation method for the public IP address"
+  type        = string
+  default     = "Static"
+}
+
+variable "public_ip_sku" {
+  description = "SKU for the public IP address"
+  type        = string
+  default     = "Standard"
 }

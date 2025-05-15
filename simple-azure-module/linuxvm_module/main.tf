@@ -15,32 +15,65 @@ provider "azurerm" {
   }
 }
 
+# Create a public IP address
+resource "azurerm_public_ip" "example" {
+  name                = var.public_ip_name
+  location            = var.location
+  resource_group_name = var.resource_group_name
+  allocation_method   = var.public_ip_allocation_method
+  sku                 = var.public_ip_sku
+}
+
+# Create Network Security Group and rules
+resource "azurerm_network_security_group" "example" {
+  name                = var.nsg_name
+  location            = var.location
+  resource_group_name = var.resource_group_name
+
+  security_rule {
+    name                       = "SSH"
+    priority                   = 1001
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_range     = "22"
+    source_address_prefix      = "*"
+    destination_address_prefix = "*"
+  }
+}
+
+# Associate NSG with subnet
+resource "azurerm_subnet_network_security_group_association" "example" {
+  subnet_id                 = var.subnet_id
+  network_security_group_id = azurerm_network_security_group.example.id
+}
+
 resource "azurerm_network_interface" "example" {
   name                = var.nic_name
-  location            = var.location            # this used to be: azurerm_resource_group.example.location
-  resource_group_name = var.resource_group_name # this used to be: azurerm_resource_group.example.name
+  location            = var.location
+  resource_group_name = var.resource_group_name
 
   ip_configuration {
     name                          = var.ip_configuration_name
-    subnet_id                     = var.subnet_id # this used to be: azurerm_subnet.example.id
+    subnet_id                     = var.subnet_id
     private_ip_address_allocation = var.ip_address_allocation
+    public_ip_address_id          = azurerm_public_ip.example.id
   }
 }
 
 resource "azurerm_linux_virtual_machine" "example" {
-  name                = var.vm_name
-  resource_group_name = var.resource_group_name # this used to be: azurerm_resource_group.example.name
-  location            = var.location            # this used to be: azurerm_resource_group.example.location
-  size                = var.vm_size
-  admin_username      = var.admin_username
+  name                            = var.vm_name
+  resource_group_name             = var.resource_group_name
+  location                        = var.location
+  size                            = var.vm_size
+  admin_username                  = var.admin_username
+  admin_password                  = var.admin_password
+  disable_password_authentication = false
+
   network_interface_ids = [
     azurerm_network_interface.example.id,
   ]
-
-  admin_ssh_key {
-    username   = var.admin_username
-    public_key = tls_private_key.ssh_key.public_key_openssh
-  }
 
   os_disk {
     caching              = var.os_disk_caching
@@ -55,6 +88,7 @@ resource "azurerm_linux_virtual_machine" "example" {
   }
 }
 
+# We'll keep the SSH key generation for reference, but it won't be used for VM authentication
 resource "tls_private_key" "ssh_key" {
   algorithm = var.ssh_key_algorithm
   rsa_bits  = var.ssh_key_rsa_bits
