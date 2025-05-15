@@ -55,13 +55,6 @@ resource "azurerm_managed_disk" "example" {
   }
 }
 
-resource "azurerm_virtual_machine_data_disk_attachment" "example" {
-  managed_disk_id    = azurerm_managed_disk.example.id
-  virtual_machine_id = azurerm_windows_virtual_machine.example.id
-  lun                = "10"
-  caching            = "ReadWrite"
-}
-
 resource "azurerm_windows_virtual_machine" "example" {
   name                = "example-machine"
   resource_group_name = azurerm_resource_group.example.name
@@ -85,3 +78,12 @@ resource "azurerm_windows_virtual_machine" "example" {
     version   = "latest"
   }
 }
+
+resource "azurerm_virtual_machine_data_disk_attachment" "example" {
+  managed_disk_id    = azurerm_managed_disk.example.id
+  virtual_machine_id = azurerm_windows_virtual_machine.example.id
+  lun                = "10"
+  caching            = "ReadWrite"
+}
+
+
