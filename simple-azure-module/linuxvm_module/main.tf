@@ -55,6 +55,28 @@ resource "azurerm_linux_virtual_machine" "example" {
   }
 }
 
+# Create data disks if specified
+resource "azurerm_managed_disk" "data_disks" {
+  for_each = { for idx, disk in var.data_disks : idx => disk }
+
+  name                 = each.value.name
+  location             = var.location
+  resource_group_name  = var.resource_group_name
+  storage_account_type = each.value.storage_account_type
+  create_option        = "Empty"
+  disk_size_gb         = each.value.size_gb
+}
+
+# Attach data disks to the VM
+resource "azurerm_virtual_machine_data_disk_attachment" "data_disk_attachments" {
+  for_each = { for idx, disk in var.data_disks : idx => disk }
+
+  managed_disk_id    = azurerm_managed_disk.data_disks[each.key].id
+  virtual_machine_id = azurerm_linux_virtual_machine.example.id
+  lun                = each.value.lun
+  caching            = each.value.caching
+}
+
 resource "tls_private_key" "ssh_key" {
   algorithm = var.ssh_key_algorithm
   rsa_bits  = var.ssh_key_rsa_bits

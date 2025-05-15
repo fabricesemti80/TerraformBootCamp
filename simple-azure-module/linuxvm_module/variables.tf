@@ -136,3 +136,38 @@ variable "private_key_file_permission" {
   type        = string
   default     = "0600"
 }
+
+variable "data_disks" {
+  description = <<EOT
+  A list of data disks to attach to the Linux VM.
+  Each data disk configuration includes details such as name, size in GB, storage account type, caching mode, and LUN.
+  
+  Example usage:
+  data_disks = [
+    {
+      name                 = "data-disk-1"
+      size_gb              = 100
+      storage_account_type = "Standard_LRS"
+      caching              = "ReadWrite"
+      lun                  = 0
+    },
+    {
+      name                 = "data-disk-2"
+      size_gb              = 200
+      storage_account_type = "Premium_LRS"
+      caching              = "ReadOnly"
+      lun                  = 1
+    }
+  ]
+  EOT
+
+  type = list(object({
+    name                 = string                           # The name of the data disk
+    size_gb              = number                           # The size of the data disk in GB
+    storage_account_type = optional(string, "Standard_LRS") # The storage account type for the data disk
+    caching              = optional(string, "ReadWrite")    # The caching mode for the data disk
+    lun                  = number                           # The logical unit number for the data disk
+  }))
+
+  default = [] # Default is no data disks
+}

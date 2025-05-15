@@ -56,6 +56,16 @@ module "vm_example_1" {
 
   image_offer = "0001-com-ubuntu-server-jammy"
   image_sku   = "22_04-lts"
+
+
+  # data_disks = [
+  #   {
+  #     name                 = "vm1-data-disk-1"
+  #     size_gb              = 2
+  #     lun                  = 0
+  #     storage_account_type = "Standard_LRS"
+  #   }
+  # ]
 }
 
 module "vm_example_2" {
@@ -73,5 +83,13 @@ module "vm_example_2" {
   image_sku   = "server"
   vm_size     = "Standard_D2s_v3"
 
-}
 
+  data_disks = [
+    {
+      name                 = "vm2-data-disk-1"
+      size_gb              = 1
+      lun                  = 0
+      storage_account_type = "Standard_LRS"
+    }
+  ]
+}
